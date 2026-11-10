@@ -3,6 +3,10 @@ import 'package:flutter/material.dart';
 class AppTheme {
   const AppTheme._();
 
+  static final ValueNotifier<ThemeMode> themeMode = ValueNotifier<ThemeMode>(
+    ThemeMode.system,
+  );
+
   static final ThemeData lightTheme = ThemeData(
     useMaterial3: true,
     colorScheme: const ColorScheme.light(

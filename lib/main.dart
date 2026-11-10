@@ -12,13 +12,16 @@ class SuperSleepApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      title: 'Super Sleep',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
-      routerConfig: appRouter,
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: AppTheme.themeMode,
+      builder: (context, themeMode, _) => MaterialApp.router(
+        title: 'Super Sleep',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: themeMode,
+        routerConfig: appRouter,
+      ),
     );
   }
 }
