@@ -15,7 +15,8 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen> {
   static const _minimumVisibleDuration = Duration(milliseconds: 800);
-  final AlarmPermissionService _permissionService = const AlarmPermissionService();
+  final AlarmPermissionService _permissionService =
+      const AlarmPermissionService();
   Timer? _navigationTimer;
 
   @override
