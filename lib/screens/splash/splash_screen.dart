@@ -9,7 +9,7 @@ class SplashScreen extends StatefulWidget {
   @override
   State<SplashScreen> createState() => _SplashScreenState();
 }
-456
+
 class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
