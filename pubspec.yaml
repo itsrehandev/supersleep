@@ -38,6 +38,8 @@ dependencies:
   go_router: ^14.8.0
   file_picker: ^8.1.7
   audioplayers: ^6.1.0
+  permission_handler: ^12.0.0
+  vibration: ^3.1.8
 
 dev_dependencies:
   flutter_test:
@@ -49,7 +51,7 @@ dev_dependencies:
 flutter_native_splash:
   color: "#F8FAFC"
   color_dark: "#121212"
-  image: assets/logo.svg
+  image: lib/assets/logo.svg
   android_12:
     color: "#F8FAFC"
     color_dark: "#121212"
@@ -68,6 +70,8 @@ flutter:
 
   assets:
     - lib/assets/logo.svg
+    - assets/sounds/
+    - lib/assets/sounds/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

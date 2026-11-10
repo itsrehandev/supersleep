@@ -12,12 +12,17 @@ import '../screens/splash/splash_screen.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/splash',
+  debugLogDiagnostics: false,
   routes: [
     // Splash Screen (outside shell)
     GoRoute(
       path: '/splash',
       pageBuilder: (context, state) =>
           const NoTransitionPage(child: SplashScreen()),
+    ),
+    GoRoute(
+      path: '/',
+      redirect: (context, state) => '/splash',
     ),
     // Active Alarm Screen (outside shell)
     GoRoute(

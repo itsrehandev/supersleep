@@ -17,6 +17,29 @@ class AlarmStore {
     alarmsNotifier.value = _sortedAlarms(current);
   }
 
+  void updateAlarm(Alarm updated) {
+    final current = List<Alarm>.from(alarmsNotifier.value);
+    final index = current.indexWhere((a) => a.id == updated.id);
+    if (index != -1) {
+      current[index] = updated;
+      alarmsNotifier.value = _sortedAlarms(current);
+    }
+  }
+
+  void duplicateAlarm(String id) {
+    final current = List<Alarm>.from(alarmsNotifier.value);
+    final index = current.indexWhere((a) => a.id == id);
+    if (index != -1) {
+      final original = current[index];
+      final duplicate = original.copyWith(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        label: '${original.label} (Copy)',
+      );
+      current.add(duplicate);
+      alarmsNotifier.value = _sortedAlarms(current);
+    }
+  }
+
   void toggleAlarm(String id, bool isEnabled) {
     final current = List<Alarm>.from(alarmsNotifier.value);
     final index = current.indexWhere((a) => a.id == id);

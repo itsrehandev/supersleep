@@ -58,50 +58,57 @@ class AlarmsDashboardPage extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               children: [
                 // Next Alarm Card
-                Card(
-                  elevation: 0,
-                  color: colorScheme.primaryContainer,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
+                InkWell(
+                  onTap: () => AddAlarmScreen.showAsModal(
+                    context,
+                    alarmToEdit: nextAlarm,
                   ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Next Alarm',
-                              style: textTheme.labelMedium?.copyWith(
-                                color: colorScheme.onPrimaryContainer,
-                                fontWeight: FontWeight.bold,
+                  borderRadius: BorderRadius.circular(20),
+                  child: Card(
+                    elevation: 0,
+                    color: colorScheme.primaryContainer,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Next Alarm',
+                                style: textTheme.labelMedium?.copyWith(
+                                  color: colorScheme.onPrimaryContainer,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                            ),
-                            Icon(
-                              Icons.alarm_on,
+                              Icon(
+                                Icons.alarm_on,
+                                color: colorScheme.onPrimaryContainer,
+                                size: 20,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            nextAlarm.time.format(context),
+                            style: textTheme.displayMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
                               color: colorScheme.onPrimaryContainer,
-                              size: 20,
                             ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          nextAlarm.time.format(context),
-                          style: textTheme.displayMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: colorScheme.onPrimaryContainer,
                           ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '${nextAlarm.label} • ${nextAlarm.getRepeatText()}',
-                          style: textTheme.bodyMedium?.copyWith(
-                            color: colorScheme.onPrimaryContainer,
+                          const SizedBox(height: 4),
+                          Text(
+                            '${nextAlarm.label} • ${nextAlarm.getRepeatText()}',
+                            style: textTheme.bodyMedium?.copyWith(
+                              color: colorScheme.onPrimaryContainer,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -128,82 +135,130 @@ class AlarmsDashboardPage extends StatelessWidget {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
+                    child: InkWell(
+                      onTap: () => AddAlarmScreen.showAsModal(
+                        context,
+                        alarmToEdit: alarm,
                       ),
-                      title: Text(
-                        formattedTime,
-                        style: textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: alarm.isEnabled
-                              ? colorScheme.onSurface
-                              : colorScheme.onSurfaceVariant.withOpacity(0.6),
+                      borderRadius: BorderRadius.circular(16),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
                         ),
-                      ),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: 4),
-                          Text(
-                            '${alarm.label} • $repeatText',
-                            style: textTheme.bodyMedium?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
-                            ),
+                        title: Text(
+                          formattedTime,
+                          style: textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: alarm.isEnabled
+                                ? colorScheme.onSurface
+                                : colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
                           ),
-                          if (alarm.mathMissionEnabled ||
-                              alarm.typingMissionEnabled ||
-                              alarm.qrMissionEnabled) ...[
-                            const SizedBox(height: 6),
-                            Wrap(
-                              spacing: 6,
-                              children: [
-                                if (alarm.mathMissionEnabled)
-                                  Chip(
-                                    visualDensity: VisualDensity.compact,
-                                    label: Text(
-                                      'Math (${alarm.mathDifficulty})',
-                                      style: const TextStyle(fontSize: 11),
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 4),
+                            Text(
+                              '${alarm.label} • $repeatText',
+                              style: textTheme.bodyMedium?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                            if (alarm.mathMissionEnabled ||
+                                alarm.typingMissionEnabled ||
+                                alarm.qrMissionEnabled) ...[
+                              const SizedBox(height: 6),
+                              Wrap(
+                                spacing: 6,
+                                children: [
+                                  if (alarm.mathMissionEnabled)
+                                    Chip(
+                                      visualDensity: VisualDensity.compact,
+                                      label: Text(
+                                        'Math (${alarm.mathDifficulty})',
+                                        style: const TextStyle(fontSize: 11),
+                                      ),
                                     ),
-                                  ),
-                                if (alarm.typingMissionEnabled)
-                                  Chip(
-                                    visualDensity: VisualDensity.compact,
-                                    label: Text(
-                                      'Typing (${alarm.typingDifficulty})',
-                                      style: const TextStyle(fontSize: 11),
+                                  if (alarm.typingMissionEnabled)
+                                    Chip(
+                                      visualDensity: VisualDensity.compact,
+                                      label: Text(
+                                        'Typing (${alarm.typingDifficulty})',
+                                        style: const TextStyle(fontSize: 11),
+                                      ),
                                     ),
-                                  ),
-                                if (alarm.qrMissionEnabled)
-                                  const Chip(
-                                    visualDensity: VisualDensity.compact,
-                                    label: Text(
-                                      'QR Scan',
-                                      style: TextStyle(fontSize: 11),
+                                  if (alarm.qrMissionEnabled)
+                                    const Chip(
+                                      visualDensity: VisualDensity.compact,
+                                      label: Text(
+                                        'QR Scan',
+                                        style: TextStyle(fontSize: 11),
+                                      ),
                                     ),
+                                ],
+                              ),
+                            ],
+                          ],
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Switch(
+                              value: alarm.isEnabled,
+                              onChanged: (val) {
+                                AlarmStore.instance.toggleAlarm(alarm.id, val);
+                              },
+                            ),
+                            PopupMenuButton<String>(
+                              icon: const Icon(Icons.more_vert),
+                              onSelected: (value) {
+                                if (value == 'edit') {
+                                  AddAlarmScreen.showAsModal(
+                                    context,
+                                    alarmToEdit: alarm,
+                                  );
+                                } else if (value == 'duplicate') {
+                                  AlarmStore.instance.duplicateAlarm(alarm.id);
+                                } else if (value == 'delete') {
+                                  AlarmStore.instance.deleteAlarm(alarm.id);
+                                }
+                              },
+                              itemBuilder: (context) => const [
+                                PopupMenuItem(
+                                  value: 'edit',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.edit_outlined, size: 20),
+                                      SizedBox(width: 8),
+                                      Text('Edit'),
+                                    ],
                                   ),
+                                ),
+                                PopupMenuItem(
+                                  value: 'duplicate',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.copy_outlined, size: 20),
+                                      SizedBox(width: 8),
+                                      Text('Duplicate'),
+                                    ],
+                                  ),
+                                ),
+                                PopupMenuItem(
+                                  value: 'delete',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.delete_outline, size: 20),
+                                      SizedBox(width: 8),
+                                      Text('Delete'),
+                                    ],
+                                  ),
+                                ),
                               ],
                             ),
                           ],
-                        ],
-                      ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Switch(
-                            value: alarm.isEnabled,
-                            onChanged: (val) {
-                              AlarmStore.instance.toggleAlarm(alarm.id, val);
-                            },
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.delete_outline, size: 20),
-                            onPressed: () {
-                              AlarmStore.instance.deleteAlarm(alarm.id);
-                            },
-                          ),
-                        ],
+                        ),
                       ),
                     ),
                   );

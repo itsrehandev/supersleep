@@ -6,9 +6,14 @@ import '../../models/alarm_model.dart';
 import '../../services/alarm_store.dart';
 
 class AddAlarmScreen extends StatefulWidget {
-  const AddAlarmScreen({super.key});
+  const AddAlarmScreen({super.key, this.alarmToEdit});
 
-  static Future<void> showAsModal(BuildContext context) async {
+  final Alarm? alarmToEdit;
+
+  static Future<void> showAsModal(
+    BuildContext context, {
+    Alarm? alarmToEdit,
+  }) async {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -17,7 +22,7 @@ class AddAlarmScreen extends StatefulWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (context) => const AddAlarmScreen(),
+      builder: (context) => AddAlarmScreen(alarmToEdit: alarmToEdit),
     );
   }
 
@@ -26,40 +31,79 @@ class AddAlarmScreen extends StatefulWidget {
 }
 
 class _AddAlarmScreenState extends State<AddAlarmScreen> {
-  TimeOfDay _selectedTime = const TimeOfDay(hour: 7, minute: 0);
-  final TextEditingController _labelController =
-      TextEditingController(text: 'Alarm');
+  late TimeOfDay _selectedTime;
+  late final TextEditingController _labelController;
 
   final List<String> _days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-  late final Set<int> _selectedDays = {(DateTime.now().weekday - 1) % 7};
+  late Set<int> _selectedDays;
 
-  String _selectedRingtone = 'Gentle Sunrise (Default)';
+  late String _selectedRingtone;
   String? _customRingtonePath;
 
-  final List<String> _builtinRingtones = const [
-    'Gentle Sunrise (Default)',
-    'Radar',
-    'Beacon',
-    'Morning Breeze',
-    'Classic Bell',
-    'Digital Alarm',
-  ];
+  static const Map<String, String> _builtinRingtoneAssets = {
+    'Gentle Sunrise (Default)': 'sounds/gentleSunrise.mp3',
+    'Radar': 'sounds/radar.mp3',
+    'Beacon': 'sounds/beacon.mp3',
+    'Morning Breeze': 'sounds/morningBreeze.wav',
+    'Classic Bell': 'sounds/classicBell.wav',
+  };
 
-  bool _mathMissionEnabled = false;
-  String _mathDifficulty = 'Medium';
+  late bool _mathMissionEnabled;
+  late String _mathDifficulty;
 
-  bool _qrMissionEnabled = false;
+  late bool _qrMissionEnabled;
 
-  bool _typingMissionEnabled = false;
-  String _typingDifficulty = 'Easy';
+  late bool _typingMissionEnabled;
+  late String _typingDifficulty;
 
-  bool _vibrationEnabled = true;
-  double _volumePercentage = 70.0;
-  bool _gradualVolumeEnabled = true;
-  int _gradualDurationSeconds = 15;
+  late bool _vibrationEnabled;
+  late double _volumePercentage;
+  late bool _gradualVolumeEnabled;
+  late int _gradualDurationSeconds;
 
-  bool _snoozeEnabled = true;
-  int _snoozeIntervalMinutes = 5;
+  late bool _snoozeEnabled;
+  late int _snoozeIntervalMinutes;
+
+  @override
+  void initState() {
+    super.initState();
+    final alarm = widget.alarmToEdit;
+    if (alarm != null) {
+      _selectedTime = alarm.time;
+      _labelController = TextEditingController(text: alarm.label);
+      _selectedDays = Set<int>.from(alarm.repeatDays);
+      _selectedRingtone = alarm.ringtoneName;
+      _customRingtonePath = alarm.ringtonePath;
+      _mathMissionEnabled = alarm.mathMissionEnabled;
+      _mathDifficulty = alarm.mathDifficulty;
+      _typingMissionEnabled = alarm.typingMissionEnabled;
+      _typingDifficulty = alarm.typingDifficulty;
+      _qrMissionEnabled = alarm.qrMissionEnabled;
+      _vibrationEnabled = alarm.vibrationEnabled;
+      _volumePercentage = alarm.volumePercentage.clamp(0.0, 100.0);
+      _gradualVolumeEnabled = alarm.gradualVolumeEnabled;
+      _gradualDurationSeconds = alarm.gradualDurationSeconds;
+      _snoozeEnabled = alarm.snoozeEnabled;
+      _snoozeIntervalMinutes = alarm.snoozeIntervalMinutes;
+    } else {
+      _selectedTime = const TimeOfDay(hour: 7, minute: 0);
+      _labelController = TextEditingController(text: 'Alarm');
+      _selectedDays = {(DateTime.now().weekday - 1) % 7};
+      _selectedRingtone = 'Gentle Sunrise (Default)';
+      _customRingtonePath = null;
+      _mathMissionEnabled = false;
+      _mathDifficulty = 'Medium';
+      _qrMissionEnabled = false;
+      _typingMissionEnabled = false;
+      _typingDifficulty = 'Easy';
+      _vibrationEnabled = true;
+      _volumePercentage = 70.0;
+      _gradualVolumeEnabled = true;
+      _gradualDurationSeconds = 15;
+      _snoozeEnabled = true;
+      _snoozeIntervalMinutes = 5;
+    }
+  }
 
   @override
   void dispose() {
@@ -107,11 +151,18 @@ class _AddAlarmScreenState extends State<AddAlarmScreen> {
                   playingRingtone = ringtoneName;
                 });
 
+                await player.setVolume(1.0);
+
                 if (customPath != null && customPath.isNotEmpty) {
                   await player.play(DeviceFileSource(customPath));
+                } else {
+                  final relativePath = _builtinRingtoneAssets[ringtoneName];
+                  if (relativePath != null) {
+                    await player.play(AssetSource(relativePath));
+                  }
                 }
-              } catch (_) {
-                // Ignore errors if audio source unavailable
+              } catch (e) {
+                debugPrint('Error playing ringtone $ringtoneName: $e');
               }
             }
 
@@ -148,7 +199,7 @@ class _AddAlarmScreenState extends State<AddAlarmScreen> {
                       ),
                     ),
                     const Divider(height: 16),
-                    ..._builtinRingtones.map((ringtone) {
+                    ..._builtinRingtoneAssets.keys.map((ringtone) {
                       final isSelected = ringtone == _selectedRingtone;
                       final isPlaying = ringtone == playingRingtone;
 
@@ -230,34 +281,71 @@ class _AddAlarmScreenState extends State<AddAlarmScreen> {
   }
 
   void _saveAlarm() {
+    // 1. Label Validation
     final labelText = _labelController.text.trim();
-    final newAlarm = Alarm(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
+    final validatedLabel = labelText.isEmpty ? 'Alarm' : labelText;
+
+    // 2. Volume & Duration Validation
+    final validatedVolume = _volumePercentage.clamp(0.0, 100.0);
+    final validatedGradualDuration =
+        [15, 30, 45].contains(_gradualDurationSeconds)
+            ? _gradualDurationSeconds
+            : 15;
+    final validatedSnoozeInterval =
+        [5, 10, 15].contains(_snoozeIntervalMinutes)
+            ? _snoozeIntervalMinutes
+            : 5;
+
+    // 3. Difficulty Validation
+    final validatedMathDifficulty =
+        ['Easy', 'Medium', 'Hard'].contains(_mathDifficulty)
+            ? _mathDifficulty
+            : 'Medium';
+    final validatedTypingDifficulty =
+        ['Easy', 'Medium', 'Hard'].contains(_typingDifficulty)
+            ? _typingDifficulty
+            : 'Easy';
+
+    final isEditing = widget.alarmToEdit != null;
+    final alarmId = isEditing
+        ? widget.alarmToEdit!.id
+        : DateTime.now().millisecondsSinceEpoch.toString();
+
+    final alarmObj = Alarm(
+      id: alarmId,
       time: _selectedTime,
-      label: labelText.isEmpty ? 'Alarm' : labelText,
+      label: validatedLabel,
       repeatDays: Set<int>.from(_selectedDays),
       ringtoneName: _selectedRingtone,
       ringtonePath: _customRingtonePath,
       mathMissionEnabled: _mathMissionEnabled,
-      mathDifficulty: _mathDifficulty,
+      mathDifficulty: validatedMathDifficulty,
       typingMissionEnabled: _typingMissionEnabled,
-      typingDifficulty: _typingDifficulty,
+      typingDifficulty: validatedTypingDifficulty,
       qrMissionEnabled: _qrMissionEnabled,
       vibrationEnabled: _vibrationEnabled,
-      volumePercentage: _volumePercentage,
+      volumePercentage: validatedVolume,
       gradualVolumeEnabled: _gradualVolumeEnabled,
-      gradualDurationSeconds: _gradualDurationSeconds,
+      gradualDurationSeconds: validatedGradualDuration,
       snoozeEnabled: _snoozeEnabled,
-      snoozeIntervalMinutes: _snoozeIntervalMinutes,
+      snoozeIntervalMinutes: validatedSnoozeInterval,
     );
 
-    AlarmStore.instance.addAlarm(newAlarm);
+    if (isEditing) {
+      AlarmStore.instance.updateAlarm(alarmObj);
+    } else {
+      AlarmStore.instance.addAlarm(alarmObj);
+    }
 
     final formattedTime = _selectedTime.format(context);
     Navigator.of(context).pop();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Alarm set for $formattedTime'),
+        content: Text(
+          isEditing
+              ? 'Alarm updated for $formattedTime'
+              : 'Alarm set for $formattedTime',
+        ),
         duration: const Duration(seconds: 2),
       ),
     );
@@ -270,11 +358,12 @@ class _AddAlarmScreenState extends State<AddAlarmScreen> {
     final textTheme = theme.textTheme;
 
     final formattedTime = _selectedTime.format(context);
+    final isEditing = widget.alarmToEdit != null;
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        title: const Text('Add Alarm'),
+        title: Text(isEditing ? 'Edit Alarm' : 'Add Alarm'),
         centerTitle: true,
         backgroundColor: colorScheme.surface,
         leading: IconButton(
