@@ -3,9 +3,12 @@ import 'package:flutter/material.dart';
 import 'core/app_router.dart';
 import 'core/app_theme.dart';
 import 'services/alarm_scheduler.dart';
+import 'services/alarm_store.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await AlarmStore.instance.loadAlarmsFromDb();
+  await AlarmSchedulerService.instance.start();
   runApp(const SuperSleepApp());
 }
 
@@ -20,7 +23,6 @@ class _SuperSleepAppState extends State<SuperSleepApp> {
   @override
   void initState() {
     super.initState();
-    AlarmSchedulerService.instance.start();
   }
 
   @override

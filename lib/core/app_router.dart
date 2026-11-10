@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../screens/home/home_screen.dart';
@@ -10,7 +11,10 @@ import '../screens/permissions/permission_wizard_screen.dart';
 import '../screens/ringing/ringing_screen.dart';
 import '../screens/splash/splash_screen.dart';
 
+final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
+
 final appRouter = GoRouter(
+  navigatorKey: rootNavigatorKey,
   initialLocation: '/splash',
   debugLogDiagnostics: false,
   routes: [

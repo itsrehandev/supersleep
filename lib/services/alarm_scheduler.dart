@@ -1,12 +1,20 @@
 import 'dart:async';
 
+import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
+import '../core/app_router.dart';
 import '../models/alarm_model.dart';
-import '../screens/ringing/ringing_screen.dart';
 import '../services/alarm_store.dart';
 
-final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
+@pragma('vm:entry-point')
+void alarmFireCallback(int id) {
+  final context = rootNavigatorKey.currentContext;
+  if (context != null && context.mounted) {
+    context.go('/ringing');
+  }
+}
 
 class AlarmSchedulerService {
   AlarmSchedulerService._();
@@ -16,15 +24,51 @@ class AlarmSchedulerService {
   Timer? _timer;
   final Map<String, DateTime> _lastTriggeredAt = {};
 
-  void start() {
+  Future<void> start() async {
     _timer?.cancel();
+    try {
+      await AndroidAlarmManager.initialize();
+    } catch (_) {
+      // Gracefully handle if platform is non-Android
+    }
     _checkNow();
-    _timer = Timer.periodic(const Duration(seconds: 15), (_) => _checkNow());
+    _timer = Timer.periodic(const Duration(seconds: 10), (_) => _checkNow());
   }
 
   void stop() {
     _timer?.cancel();
     _timer = null;
+  }
+
+  void scheduleAlarmInOS(Alarm alarm) async {
+    if (!alarm.isEnabled) {
+      return;
+    }
+
+    final fireDateTime = alarm.getNextFireDateTime();
+    final int alarmId = alarm.id.hashCode & 0x7FFFFFFF;
+
+    try {
+      await AndroidAlarmManager.oneShotAt(
+        fireDateTime,
+        alarmId,
+        alarmFireCallback,
+        exact: true,
+        wakeup: true,
+        alarmClock: true,
+        allowWhileIdle: true,
+        rescheduleOnReboot: true,
+      );
+    } catch (e) {
+      debugPrint('Error scheduling OS alarm: $e');
+    }
+  }
+
+  void cancelAlarmInOS(String alarmIdStr) async {
+    final int alarmId = alarmIdStr.hashCode & 0x7FFFFFFF;
+    try {
+      await AndroidAlarmManager.cancel(alarmId);
+    } catch (_) {}
   }
 
   void _checkNow() {
@@ -51,11 +95,6 @@ class AlarmSchedulerService {
       return false;
     }
 
-    final toleranceSeconds = now.second;
-    if (toleranceSeconds > 30) {
-      return false;
-    }
-
     final weekday = (now.weekday - 1) % 7;
     if (alarm.repeatDays.isEmpty) {
       final todaysCandidate = DateTime(
@@ -65,8 +104,8 @@ class AlarmSchedulerService {
         alarm.time.hour,
         alarm.time.minute,
       );
-      final deltaMinutes = now.difference(todaysCandidate).inMinutes;
-      return deltaMinutes >= 0 && deltaMinutes < 2;
+      final deltaSeconds = now.difference(todaysCandidate).inSeconds;
+      return deltaSeconds >= 0 && deltaSeconds <= 59;
     }
 
     return alarm.repeatDays.contains(weekday);
@@ -80,17 +119,10 @@ class AlarmSchedulerService {
 
   void _triggerAlarm(Alarm alarm) {
     final context = rootNavigatorKey.currentContext;
-    if (context == null) {
+    if (context == null || !context.mounted) {
       return;
     }
 
-    final label = alarm.label.trim().isEmpty ? 'Super Sleep Alarm' : alarm.label.trim();
-    final route = MaterialPageRoute<void>(
-      builder: (_) => Scaffold(
-        body: ActiveAlarmScreen(alarmLabel: label),
-      ),
-    );
-
-    Navigator.of(context, rootNavigator: true).push(route);
+    context.go('/ringing');
   }
 }

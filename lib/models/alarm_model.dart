@@ -83,6 +83,68 @@ class Alarm {
     );
   }
 
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'hour': time.hour,
+      'minute': time.minute,
+      'label': label,
+      'repeat_days': repeatDays.join(','),
+      'is_enabled': isEnabled ? 1 : 0,
+      'ringtone_name': ringtoneName,
+      'ringtone_path': ringtonePath ?? '',
+      'math_mission_enabled': mathMissionEnabled ? 1 : 0,
+      'math_difficulty': mathDifficulty,
+      'typing_mission_enabled': typingMissionEnabled ? 1 : 0,
+      'typing_difficulty': typingDifficulty,
+      'qr_mission_enabled': qrMissionEnabled ? 1 : 0,
+      'vibration_enabled': vibrationEnabled ? 1 : 0,
+      'volume_percentage': volumePercentage,
+      'gradual_volume_enabled': gradualVolumeEnabled ? 1 : 0,
+      'gradual_duration_seconds': gradualDurationSeconds,
+      'snooze_enabled': snoozeEnabled ? 1 : 0,
+      'snooze_interval_minutes': snoozeIntervalMinutes,
+      'next_fire_epoch': getNextFireDateTime().millisecondsSinceEpoch,
+    };
+  }
+
+  factory Alarm.fromMap(Map<String, dynamic> map) {
+    final repeatDaysStr = (map['repeat_days'] as String? ?? '');
+    final repeatSet = repeatDaysStr.isEmpty
+        ? <int>{}
+        : repeatDaysStr
+            .split(',')
+            .map((e) => int.tryParse(e))
+            .whereType<int>()
+            .toSet();
+
+    return Alarm(
+      id: map['id'] as String,
+      time: TimeOfDay(
+        hour: map['hour'] as int? ?? 0,
+        minute: map['minute'] as int? ?? 0,
+      ),
+      label: map['label'] as String? ?? 'Alarm',
+      repeatDays: repeatSet,
+      isEnabled: (map['is_enabled'] as int? ?? 1) == 1,
+      ringtoneName: map['ringtone_name'] as String? ?? 'Gentle Sunrise (Default)',
+      ringtonePath: (map['ringtone_path'] as String?)?.isEmpty == true
+          ? null
+          : map['ringtone_path'] as String?,
+      mathMissionEnabled: (map['math_mission_enabled'] as int? ?? 0) == 1,
+      mathDifficulty: map['math_difficulty'] as String? ?? 'Medium',
+      typingMissionEnabled: (map['typing_mission_enabled'] as int? ?? 0) == 1,
+      typingDifficulty: map['typing_difficulty'] as String? ?? 'Easy',
+      qrMissionEnabled: (map['qr_mission_enabled'] as int? ?? 0) == 1,
+      vibrationEnabled: (map['vibration_enabled'] as int? ?? 1) == 1,
+      volumePercentage: (map['volume_percentage'] as num? ?? 70.0).toDouble(),
+      gradualVolumeEnabled: (map['gradual_volume_enabled'] as int? ?? 1) == 1,
+      gradualDurationSeconds: map['gradual_duration_seconds'] as int? ?? 15,
+      snoozeEnabled: (map['snooze_enabled'] as int? ?? 1) == 1,
+      snoozeIntervalMinutes: map['snooze_interval_minutes'] as int? ?? 5,
+    );
+  }
+
   /// Calculates next DateTime when this alarm will fire from [now].
   DateTime getNextFireDateTime([DateTime? now]) {
     now ??= DateTime.now();

@@ -1,10 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../services/alarm_player.dart';
+import '../../services/alarm_store.dart';
 
 class ActiveAlarmScreen extends StatefulWidget {
-  const ActiveAlarmScreen({super.key, this.alarmLabel = 'Super Sleep Alarm'});
+  const ActiveAlarmScreen({
+    super.key,
+    this.alarmId,
+    this.alarmLabel = 'Super Sleep Alarm',
+  });
 
+  final String? alarmId;
   final String alarmLabel;
 
   @override
@@ -29,15 +36,23 @@ class _ActiveAlarmScreenState extends State<ActiveAlarmScreen> {
         vibrationEnabled: true,
       );
     } catch (_) {
-      // Silent fail to protect app stability.
+      // Silent fail
+    }
+  }
+
+  void _navigateHome() {
+    if (!mounted) return;
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+    } else {
+      context.go('/alarms');
     }
   }
 
   Future<void> _stopAlarm() async {
     await _player.stop();
-    if (mounted) {
-      Navigator.of(context).pop();
-    }
+    await AlarmStore.instance.completeAlarmDismissal(widget.alarmId);
+    _navigateHome();
   }
 
   Future<void> _snoozeAlarm() async {
@@ -47,8 +62,8 @@ class _ActiveAlarmScreenState extends State<ActiveAlarmScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Alarm snoozed for 5 minutes')),
       );
-      Navigator.of(context).pop();
     }
+    _navigateHome();
   }
 
   @override
